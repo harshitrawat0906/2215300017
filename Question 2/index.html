@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dynamic Average Tool</title>
+    <script src="https://cdn.jsdelivr.net/npm/react@18/umd/react.development.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body>
+    <div id="toolbox"></div>
+    <script type="text/babel">
+      const { useState, useEffect } = React;
+
+      const AverageTool = () => {
+        const [seriesType, setSeriesType] = useState("e");
+        const [outputData, setOutputData] = useState(null);
+        const [isLoading, setIsLoading] = useState(false);
+        const [fetchError, setFetchError] = useState(null);
+
+        const retrieveSeries = async () => {
+          setIsLoading(true);
+          setFetchError(null);
+          try {
+            const result = await fetch(
+              `http://localhost:9876/numbers/${seriesType}`
+            );
+            const parsed = await result.json();
+            if (result.ok) {
+              setOutputData(parsed);
+            } else {
+              setFetchError(parsed.error || "Unable to retrieve data");
+            }
+          } catch (err) {
+            setFetchError("Connection issue occurred");
+          } finally {
+            setIsLoading(false);
+          }
+        };
+
+        const onQuerySubmit = (e) => {
+          e.preventDefault();
+          retrieveSeries();
+        };
+
+        return (
+          <div className="max-w-xl mx-auto p-6">
+            <h1 className="text-3xl font-extrabold mb-6 text-gray-800">
+              Dynamic Average Tool
+            </h1>
+            <div className="mb-6">
+              <label className="block text-sm font-semibold mb-2 text-gray-700">
+                Choose Sequence Type:
+              </label>
+              <select
+                value={seriesType}
+                onChange={(e) => setSeriesType(e.target.value)}
+                className="border border-gray-300 rounded-md p-2 w-full focus:ring-2 focus:ring-blue-400"
+              >
+                <option value="e">Even Numbers</option>
+                <option value="p">Prime Numbers</option>
+                <option value="f">Fibonacci Sequence</option>
+                <option value="r">Random Set</option>
+              </select>
+              <button
+                onClick={onQuerySubmit}
+                disabled={isLoading}
+                className="mt-4 bg-green-600 text-white px-5 py-2 rounded-md transition-all hover:bg-green-700 disabled:bg-gray-400"
+              >
+                {isLoading ? "Loading..." : "Get Numbers"}
+              </button>
+            </div>
+
+            {fetchError && (
+              <p className="text-red-600 font-medium">{fetchError}</p>
+            )}
+
+            {outputData && (
+              <div className="bg-white border border-gray-200 shadow-md p-5 rounded-lg">
+                <h2 className="text-lg font-semibold mb-2 text-gray-800">
+                  Results Overview
+                </h2>
+                <pre className="bg-gray-100 p-3 rounded-md text-sm overflow-auto">
+                  {JSON.stringify(outputData, null, 2)}
+                </pre>
+              </div>
+            )}
+          </div>
+        );
+      };
+
+      ReactDOM.render(<AverageTool />, document.getElementById("toolbox"));
+    </script>
+  </body>
+</html>
